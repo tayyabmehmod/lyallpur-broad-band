@@ -7,6 +7,17 @@ import '../models/package.dart';
 import '../models/client.dart';
 
 class FirebaseService {
+  // --- STREAM CACHE SYSTEM FOR INSTANT LOADING ---
+  static DashboardStats? lastStats;
+  static List<AreaModel>? lastAreas;
+  static List<ClientModel>? lastClients;
+  static List<Map<String, dynamic>>? lastPayments;
+
+  static Stream<DashboardStats>? _statsStream;
+  static Stream<List<AreaModel>>? _areasStream;
+  static Stream<List<ClientModel>>? _clientsStream;
+  static Stream<List<Map<String, dynamic>>>? _paymentsStream;
+
   // Check if Firebase is initialized
   static bool get isInitialized => Firebase.apps.isNotEmpty;
 
@@ -187,12 +198,11 @@ class FirebaseService {
   // Get real-time stats stream with fallback for Demo Mode
   Stream<DashboardStats> getDashboardStats() {
     if (!isInitialized) {
-      // Immediately notify to emit initial dashboard stats
       Future.microtask(() => _notifyMockStats());
       return _mockStatsController.stream;
     }
 
-    return FirebaseFirestore.instance
+    _statsStream ??= FirebaseFirestore.instance
         .collection('clients')
         .snapshots()
         .map((snapshot) {
@@ -216,13 +226,17 @@ class FirebaseService {
         pending += remaining;
       }
 
-      return DashboardStats(
+      final stats = DashboardStats(
         totalClients: total,
         activeClients: active,
         expiredClients: expired,
         totalPendingDues: pending,
       );
-    });
+      lastStats = stats;
+      return stats;
+    }).asBroadcastStream();
+
+    return _statsStream!;
   }
 
   // Check duplicate area names (case-insensitive)
@@ -249,12 +263,12 @@ class FirebaseService {
       return _mockAreasController.stream;
     }
 
-    return FirebaseFirestore.instance
+    _areasStream ??= FirebaseFirestore.instance
         .collection('areas')
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final list = snapshot.docs.map((doc) {
         final data = doc.data();
         return AreaModel(
           id: doc.id,
@@ -263,7 +277,11 @@ class FirebaseService {
           createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         );
       }).toList();
-    });
+      lastAreas = list;
+      return list;
+    }).asBroadcastStream();
+
+    return _areasStream!;
   }
 
   // Add new area
@@ -488,15 +506,59 @@ class FirebaseService {
       return Stream.value(_mockClients);
     }
 
-    Query query = FirebaseFirestore.instance.collection('clients');
     if (status != null) {
-      query = query.where('status', isEqualTo: status);
-    }
-    query = query.orderBy('createdAt', descending: true);
+      return FirebaseFirestore.instance
+          .collection('clients')
+          .where('status', isEqualTo: status)
+          .orderBy('createdAt', descending: true)
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs.map((doc) {
+          final data = doc.data();
+          
+          DateTime connDate = DateTime.now();
+          if (data['connectionDate'] != null) {
+            if (data['connectionDate'] is Timestamp) {
+              connDate = (data['connectionDate'] as Timestamp).toDate();
+            } else {
+              connDate = DateTime.tryParse(data['connectionDate'].toString()) ?? DateTime.now();
+            }
+          }
 
-    return query.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
+          DateTime createDate = DateTime.now();
+          if (data['createdAt'] != null) {
+            if (data['createdAt'] is Timestamp) {
+              createDate = (data['createdAt'] as Timestamp).toDate();
+            } else {
+              createDate = DateTime.tryParse(data['createdAt'].toString()) ?? DateTime.now();
+            }
+          }
+
+          return ClientModel(
+            id: doc.id,
+            name: data['name']?.toString() ?? '',
+            phone: data['phone']?.toString() ?? '',
+            area: data['area']?.toString() ?? '',
+            packageId: data['packageId']?.toString() ?? '',
+            packageName: data['packageName']?.toString() ?? '',
+            connectionDate: connDate,
+            status: data['status']?.toString() ?? 'active',
+            totalBill: double.tryParse(data['totalBill']?.toString() ?? '') ?? 0.0,
+            totalPaid: double.tryParse(data['totalPaid']?.toString() ?? '') ?? 0.0,
+            remaining: double.tryParse(data['remaining']?.toString() ?? '') ?? 0.0,
+            createdAt: createDate,
+          );
+        }).toList();
+      });
+    }
+
+    _clientsStream ??= FirebaseFirestore.instance
+        .collection('clients')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      final list = snapshot.docs.map((doc) {
+        final data = doc.data();
         
         DateTime connDate = DateTime.now();
         if (data['connectionDate'] != null) {
@@ -531,7 +593,11 @@ class FirebaseService {
           createdAt: createDate,
         );
       }).toList();
-    });
+      lastClients = list;
+      return list;
+    }).asBroadcastStream();
+
+    return _clientsStream!;
   }
 
   // Get detailed client stream
@@ -697,12 +763,12 @@ class FirebaseService {
       ]);
     }
 
-    return FirebaseFirestore.instance
+    _paymentsStream ??= FirebaseFirestore.instance
         .collection('payments')
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final list = snapshot.docs.map((doc) {
         final data = doc.data();
         DateTime dateVal = DateTime.now();
         if (data['date'] != null) {
@@ -722,7 +788,11 @@ class FirebaseService {
           'type': 'payment',
         };
       }).toList();
-    });
+      lastPayments = list;
+      return list;
+    }).asBroadcastStream();
+
+    return _paymentsStream!;
   }
 }
 

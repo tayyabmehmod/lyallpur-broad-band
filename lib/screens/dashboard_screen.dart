@@ -26,8 +26,9 @@ class DashboardScreen extends StatelessWidget {
       currentIndex: 0,
       body: StreamBuilder<DashboardStats>(
         stream: firebaseService.getDashboardStats(),
+        initialData: FirebaseService.lastStats,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(24.0),

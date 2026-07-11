@@ -23,8 +23,9 @@ class HistoryScreen extends StatelessWidget {
       currentIndex: 4,
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: firebaseService.getPayments(),
+        initialData: FirebaseService.lastPayments,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
             return const Center(child: CircularProgressIndicator());
           }
 

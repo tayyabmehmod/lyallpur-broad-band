@@ -40,14 +40,54 @@ class MyApp extends StatelessWidget {
       title: 'Lyallpur Telecom Broadband',
       theme: AppTheme.themeData,
       initialRoute: loggedIn ? '/dashboard' : '/login',
-      routes: {
-        '/login': (context) => const LoginScreen(),
-        '/dashboard': (context) => const DashboardScreen(),
-        '/clients': (context) => const ClientsScreen(),
-        '/area': (context) => const AreaScreen(),
-        '/new_client': (context) => const NewClientScreen(),
-        '/client_detail': (context) => const ClientDetailScreen(),
-        '/history': (context) => const HistoryScreen(),
+      onGenerateRoute: (settings) {
+        Widget builder;
+        switch (settings.name) {
+          case '/login':
+            builder = const LoginScreen();
+            break;
+          case '/dashboard':
+            builder = const DashboardScreen();
+            break;
+          case '/clients':
+            builder = const ClientsScreen();
+            break;
+          case '/area':
+            builder = const AreaScreen();
+            break;
+          case '/new_client':
+            builder = const NewClientScreen();
+            break;
+          case '/client_detail':
+            builder = const ClientDetailScreen();
+            break;
+          case '/history':
+            builder = const HistoryScreen();
+            break;
+          default:
+            builder = const LoginScreen();
+        }
+
+        // Apply instant (zero-duration) transitions for main sidebar routes
+        final isSidebarRoute = settings.name == '/dashboard' ||
+            settings.name == '/clients' ||
+            settings.name == '/area' ||
+            settings.name == '/new_client' ||
+            settings.name == '/history';
+
+        if (isSidebarRoute) {
+          return PageRouteBuilder(
+            settings: settings,
+            pageBuilder: (context, animation, secondaryAnimation) => builder,
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          );
+        }
+
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (context) => builder,
+        );
       },
       debugShowCheckedModeBanner: false,
     );

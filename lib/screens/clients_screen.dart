@@ -94,8 +94,9 @@ class _ClientsScreenState extends State<ClientsScreen> {
           Expanded(
             child: StreamBuilder<List<ClientModel>>(
               stream: firebaseService.getClients(),
+              initialData: FirebaseService.lastClients,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
                   return const Center(child: CircularProgressIndicator());
                 }
 

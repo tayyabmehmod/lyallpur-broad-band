@@ -153,8 +153,9 @@ class AreaScreen extends StatelessWidget {
       ],
       body: StreamBuilder<List<AreaModel>>(
         stream: firebaseService.getAreas(),
+        initialData: FirebaseService.lastAreas,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
             return const Center(
               child: CircularProgressIndicator(),
             );
