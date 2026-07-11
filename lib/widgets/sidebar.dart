@@ -142,7 +142,7 @@ class AdminSidebar extends StatelessWidget {
                 const SizedBox(height: 4),
                 buildItem(
                   index: 1,
-                  icon: Icons.people_outline,
+                  icon: Icons.people_outlined,
                   activeIcon: Icons.people,
                   label: 'Clients',
                 ),
