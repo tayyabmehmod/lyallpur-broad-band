@@ -1,0 +1,37 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "lyallpur-broad-band",
+          "appId": "1:839440926513:android:6c1c6fd42b6274c60d1210",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "lyallpur-broad-band",
+          "configurations": {
+            "android": "1:839440926513:android:6c1c6fd42b6274c60d1210",
+            "ios": "1:839440926513:ios:6f44cb1aab4d8a730d1210",
+            "web": "1:839440926513:web:1cc0b21798bc27950d1210"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
