@@ -329,171 +329,194 @@ class ClientDetailScreen extends StatelessWidget {
                 final isActive = client.status == 'active';
                 final expiryDate = client.connectionDate.add(const Duration(days: 30));
 
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Header Profile Card
-                      Card(
-                        color: const Color(0xFF161B22),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: const BorderSide(color: Color(0xFF30363D)),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: Column(
-                            children: [
-                              CircleAvatar(
-                                radius: 48,
-                                backgroundColor: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
-                                child: Icon(
-                                  isActive ? Icons.wifi : Icons.wifi_off,
-                                  size: 48,
-                                  color: isActive ? Colors.greenAccent : Colors.redAccent,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                client.name,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: isActive ? Colors.green.withValues(alpha: 0.15) : Colors.red.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: isActive ? Colors.green : Colors.red,
-                                  ),
-                                ),
-                                child: Text(
-                                  client.status.toUpperCase(),
-                                  style: TextStyle(
-                                    color: isActive ? Colors.greenAccent : Colors.redAccent,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
+                final profileCard = Card(
+                  color: const Color(0xFF161B22),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFF30363D)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 48,
+                          backgroundColor: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+                          child: Icon(
+                            isActive ? Icons.wifi : Icons.wifi_off,
+                            size: 48,
+                            color: isActive ? Colors.greenAccent : Colors.redAccent,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Information Grid Cards
-                      Card(
-                        color: const Color(0xFF161B22),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: const BorderSide(color: Color(0xFF30363D)),
+                        const SizedBox(height: 16),
+                        Text(
+                          client.name,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: isWideScreen
-                              ? Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildInfoTile(
-                                            icon: Icons.phone_outlined,
-                                            iconColor: Colors.blueAccent,
-                                            title: 'Phone Number',
-                                            subtitle: client.phone,
-                                          ),
-                                        ),
-                                        Container(width: 1, height: 40, color: const Color(0xFF30363D)),
-                                        Expanded(
-                                          child: _buildInfoTile(
-                                            icon: Icons.map_outlined,
-                                            iconColor: Colors.purpleAccent,
-                                            title: 'Service Area',
-                                            subtitle: client.area.isEmpty ? 'None / Blank' : client.area,
-                                          ),
-                                        ),
-                                        Container(width: 1, height: 40, color: const Color(0xFF30363D)),
-                                        Expanded(
-                                          child: _buildInfoTile(
-                                            icon: Icons.speed,
-                                            iconColor: Colors.orangeAccent,
-                                            title: 'Subscription Package',
-                                            subtitle: client.packageName,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const Divider(height: 1, color: Color(0xFF30363D)),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildInfoTile(
-                                            icon: Icons.calendar_today_outlined,
-                                            iconColor: Colors.tealAccent,
-                                            title: 'Billing Connection Date',
-                                            subtitle: "${client.connectionDate.toLocal()}".split(' ')[0],
-                                          ),
-                                        ),
-                                        Container(width: 1, height: 40, color: const Color(0xFF30363D)),
-                                        Expanded(
-                                          child: _buildInfoTile(
-                                            icon: Icons.timer_outlined,
-                                            iconColor: Colors.pinkAccent,
-                                            title: 'Next Billing Due Date',
-                                            subtitle: "${expiryDate.toLocal()}".split(' ')[0],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                )
-                              : Column(
-                                  children: [
-                                    _buildInfoTile(
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isActive ? Colors.green.withValues(alpha: 0.15) : Colors.red.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isActive ? Colors.green : Colors.red,
+                            ),
+                          ),
+                          child: Text(
+                            client.status.toUpperCase(),
+                            style: TextStyle(
+                              color: isActive ? Colors.greenAccent : Colors.redAccent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+
+                final infoGridCard = Card(
+                  color: const Color(0xFF161B22),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFF30363D)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: isWideScreen
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildInfoTile(
                                       icon: Icons.phone_outlined,
                                       iconColor: Colors.blueAccent,
                                       title: 'Phone Number',
                                       subtitle: client.phone,
                                     ),
-                                    const Divider(height: 1, color: Color(0xFF30363D)),
-                                    _buildInfoTile(
+                                  ),
+                                  Container(width: 1, height: 40, color: const Color(0xFF30363D)),
+                                  Expanded(
+                                    child: _buildInfoTile(
                                       icon: Icons.map_outlined,
                                       iconColor: Colors.purpleAccent,
                                       title: 'Service Area',
                                       subtitle: client.area.isEmpty ? 'None / Blank' : client.area,
                                     ),
-                                    const Divider(height: 1, color: Color(0xFF30363D)),
-                                    _buildInfoTile(
+                                  ),
+                                  Container(width: 1, height: 40, color: const Color(0xFF30363D)),
+                                  Expanded(
+                                    child: _buildInfoTile(
                                       icon: Icons.speed,
                                       iconColor: Colors.orangeAccent,
                                       title: 'Subscription Package',
                                       subtitle: client.packageName,
                                     ),
-                                    const Divider(height: 1, color: Color(0xFF30363D)),
-                                    _buildInfoTile(
+                                  ),
+                                ],
+                              ),
+                              const Divider(height: 1, color: Color(0xFF30363D)),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildInfoTile(
                                       icon: Icons.calendar_today_outlined,
                                       iconColor: Colors.tealAccent,
                                       title: 'Billing Connection Date',
                                       subtitle: "${client.connectionDate.toLocal()}".split(' ')[0],
                                     ),
-                                    const Divider(height: 1, color: Color(0xFF30363D)),
-                                    _buildInfoTile(
+                                  ),
+                                  Container(width: 1, height: 40, color: const Color(0xFF30363D)),
+                                  Expanded(
+                                    child: _buildInfoTile(
                                       icon: Icons.timer_outlined,
                                       iconColor: Colors.pinkAccent,
                                       title: 'Next Billing Due Date',
                                       subtitle: "${expiryDate.toLocal()}".split(' ')[0],
                                     ),
-                                  ],
-                                ),
-                        ),
-                      ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              _buildInfoTile(
+                                icon: Icons.phone_outlined,
+                                iconColor: Colors.blueAccent,
+                                title: 'Phone Number',
+                                subtitle: client.phone,
+                              ),
+                              const Divider(height: 1, color: Color(0xFF30363D)),
+                              _buildInfoTile(
+                                icon: Icons.map_outlined,
+                                iconColor: Colors.purpleAccent,
+                                title: 'Service Area',
+                                subtitle: client.area.isEmpty ? 'None / Blank' : client.area,
+                              ),
+                              const Divider(height: 1, color: Color(0xFF30363D)),
+                              _buildInfoTile(
+                                icon: Icons.speed,
+                                iconColor: Colors.orangeAccent,
+                                title: 'Subscription Package',
+                                subtitle: client.packageName,
+                              ),
+                              const Divider(height: 1, color: Color(0xFF30363D)),
+                              _buildInfoTile(
+                                icon: Icons.calendar_today_outlined,
+                                iconColor: Colors.tealAccent,
+                                title: 'Billing Connection Date',
+                                subtitle: "${client.connectionDate.toLocal()}".split(' ')[0],
+                              ),
+                              const Divider(height: 1, color: Color(0xFF30363D)),
+                              _buildInfoTile(
+                                icon: Icons.timer_outlined,
+                                iconColor: Colors.pinkAccent,
+                                title: 'Next Billing Due Date',
+                                subtitle: "${expiryDate.toLocal()}".split(' ')[0],
+                              ),
+                            ],
+                          ),
+                  ),
+                );
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      isWideScreen
+                          ? IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  SizedBox(
+                                    width: 280,
+                                    child: profileCard,
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: infoGridCard,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Column(
+                              children: [
+                                profileCard,
+                                const SizedBox(height: 20),
+                                infoGridCard,
+                              ],
+                            ),
                       const SizedBox(height: 20),
 
                       // Bill Dues Details Card
