@@ -13,6 +13,113 @@ class ClientDetailScreen extends StatelessWidget {
     return 'Rs. $formatStr';
   }
 
+  void _showCollectPaymentDialog(BuildContext context, ClientModel client) {
+    final amountController = TextEditingController(text: client.remaining > 0 ? client.remaining.toStringAsFixed(0) : '');
+    final noteController = TextEditingController(text: 'Dues Payment');
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF161B22),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Color(0xFF30363D)),
+          ),
+          title: const Text('Collect Dues Payment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Enter the payment amount collected from "${client.name}".',
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Amount (PKR) *',
+                    hintText: 'e.g. 1000',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter the amount';
+                    }
+                    final amt = double.tryParse(value);
+                    if (amt == null || amt <= 0) {
+                      return 'Please enter a valid amount';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: noteController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Payment Note',
+                    hintText: 'e.g. Dues Payment, October paid',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF185FA5),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                final amt = double.tryParse(amountController.text) ?? 0.0;
+                final note = noteController.text.trim();
+
+                Navigator.pop(context);
+
+                try {
+                  await FirebaseService().collectPayment(
+                    clientId: client.id,
+                    clientName: client.name,
+                    amount: amt,
+                    note: note,
+                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Payment of Rs. ${amt.toStringAsFixed(0)} logged successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error logging payment: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Collect'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showRenewDialog(BuildContext context, ClientModel client) {
     final amountController = TextEditingController(text: client.totalBill.toStringAsFixed(0));
     showDialog(
@@ -342,39 +449,57 @@ class ClientDetailScreen extends StatelessWidget {
                       const SizedBox(height: 32),
 
                       // Action buttons
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.secondary,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () => _showCollectPaymentDialog(context, client),
+                            icon: const Icon(Icons.payment, color: Colors.white),
+                            label: const Text('Collect Payment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed: () => _showRenewDialog(context, client),
+                                  icon: const Icon(Icons.replay_circle_filled_outlined, color: Colors.white),
+                                  label: const Text('Renew Client', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                 ),
                               ),
-                              onPressed: () => _showRenewDialog(context, client),
-                              icon: const Icon(Icons.replay_circle_filled_outlined, color: Colors.white),
-                              label: const Text('Renew Client', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                          if (isActive) ...[
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  side: const BorderSide(color: Colors.red),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                              if (isActive) ...[
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      side: const BorderSide(color: Colors.red),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    onPressed: () => _suspendClient(context, client),
+                                    icon: const Icon(Icons.do_disturb_on_outlined, color: Colors.red),
+                                    label: const Text('Suspend', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                                   ),
                                 ),
-                                onPressed: () => _suspendClient(context, client),
-                                icon: const Icon(Icons.do_disturb_on_outlined, color: Colors.red),
-                                label: const Text('Suspend', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                              ),
-                            ),
-                          ],
+                              ],
+                            ],
+                          ),
                         ],
                       ),
                     ],

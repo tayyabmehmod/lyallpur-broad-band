@@ -748,6 +748,61 @@ class FirebaseService {
     });
   }
 
+  // Collect a payment from a client (subtracting from remaining, adding to totalPaid)
+  Future<void> collectPayment({
+    required String clientId,
+    required String clientName,
+    required double amount,
+    required String note,
+  }) async {
+    if (!isInitialized) {
+      await Future.delayed(const Duration(milliseconds: 200));
+      final index = _mockClients.indexWhere((c) => c.id == clientId);
+      if (index != -1) {
+        final existing = _mockClients[index];
+        _mockClients[index] = ClientModel(
+          id: existing.id,
+          name: existing.name,
+          phone: existing.phone,
+          area: existing.area,
+          packageId: existing.packageId,
+          packageName: existing.packageName,
+          connectionDate: existing.connectionDate,
+          status: existing.status,
+          totalBill: existing.totalBill,
+          totalPaid: existing.totalPaid + amount,
+          remaining: existing.remaining - amount,
+          createdAt: existing.createdAt,
+        );
+        _notifyMockStats();
+      }
+      return;
+    }
+
+    final clientRef = FirebaseFirestore.instance.collection('clients').doc(clientId);
+    final batch = FirebaseFirestore.instance.batch();
+
+    // 1. Update client totals
+    batch.update(clientRef, {
+      'totalPaid': FieldValue.increment(amount),
+      'remaining': FieldValue.increment(-amount),
+    });
+
+    // 2. Log payment details
+    final paymentRef = FirebaseFirestore.instance.collection('payments').doc();
+    batch.set(paymentRef, {
+      'clientId': clientId,
+      'clientName': clientName,
+      'amount': amount,
+      'date': FieldValue.serverTimestamp(),
+      'method': 'cash',
+      'note': note.trim().isEmpty ? 'Dues Payment' : note.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+  }
+
   // Stream list of payment logs
   Stream<List<Map<String, dynamic>>> getPayments() {
     if (!isInitialized) {
