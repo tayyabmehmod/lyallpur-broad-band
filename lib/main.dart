@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart' hide FirebaseService;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'theme.dart';
+import 'services/firebase_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/clients_screen.dart';
@@ -19,6 +21,15 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    if (Firebase.apps.isNotEmpty) {
+      // Enable Firestore offline persistence/cache to make load times instant
+      FirebaseFirestore.instance.settings = const Settings(
+        persistenceEnabled: true,
+        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+      );
+      // Start background syncing to prevent stream buffer/delays on tab changes
+      FirebaseService.startSyncing();
+    }
   } catch (e) {
     debugPrint('Firebase core initialization error: $e');
     debugPrint('Please configure Firebase using FlutterFire CLI to run backend features.');

@@ -210,6 +210,7 @@ class _NewClientScreenState extends State<NewClientScreen> {
 
               final areaWidget = StreamBuilder<List<AreaModel>>(
                 stream: FirebaseService().getAreas(),
+                initialData: FirebaseService.lastAreas,
                 builder: (context, snapshot) {
                   final areas = snapshot.data ?? [];
                   return DropdownButtonFormField<String>(

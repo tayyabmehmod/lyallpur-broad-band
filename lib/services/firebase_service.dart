@@ -21,6 +21,17 @@ class FirebaseService {
   // Check if Firebase is initialized
   static bool get isInitialized => Firebase.apps.isNotEmpty;
 
+  // Background synchronizer to keep Firestore streams alive and eliminate time buffers
+  static void startSyncing() {
+    if (!isInitialized) return;
+
+    // Subscribe permanently to keep the broadcast streams active and caching data
+    FirebaseService().getDashboardStats().listen((_) {});
+    FirebaseService().getAreas().listen((_) {});
+    FirebaseService().getClients().listen((_) {});
+    FirebaseService().getPayments().listen((_) {});
+  }
+
   FirebaseAuth get auth {
     if (!isInitialized) {
       throw StateError('Firebase is not initialized.');
