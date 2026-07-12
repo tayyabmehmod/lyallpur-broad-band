@@ -3,8 +3,32 @@ import '../models/area.dart';
 import '../services/firebase_service.dart';
 import '../widgets/responsive_scaffold.dart';
 
-class AreaScreen extends StatelessWidget {
+class AreaScreen extends StatefulWidget {
   const AreaScreen({super.key});
+
+  @override
+  State<AreaScreen> createState() => _AreaScreenState();
+}
+
+class _AreaScreenState extends State<AreaScreen> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   // Open dialog to Add or Edit Area
   void _showAreaDialog(BuildContext context, {AreaModel? area}) {
@@ -217,67 +241,116 @@ class AreaScreen extends StatelessWidget {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemCount: areas.length,
-            itemBuilder: (context, index) {
-              final area = areas[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: const BorderSide(color: Color(0xFF30363D), width: 1),
-                ),
-                color: const Color(0xFF161B22),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  child: Row(
-                    children: [
-                      // Lead visual badge
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(Icons.location_on_outlined, color: theme.colorScheme.tertiary),
-                      ),
-                      const SizedBox(width: 16),
-                      // Core details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              area.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${area.clientCount} Active Subscribers',
-                              style: TextStyle(color: Colors.grey[400], fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Edit Icon Button
-                      IconButton(
-                        tooltip: 'Edit',
-                        icon: Icon(Icons.edit_outlined, color: Colors.grey[400]),
-                        onPressed: () => _showAreaDialog(context, area: area),
-                      ),
-                      // Delete Icon Button
-                      IconButton(
-                        tooltip: 'Delete',
-                        icon: const Icon(Icons.delete_outline, color: Color(0xFFF85149)),
-                        onPressed: () => _showDeleteConfirmation(context, area),
-                      ),
-                    ],
+          // Filter areas based on search query
+          final filteredAreas = areas.where((area) {
+            return area.name.toLowerCase().contains(_searchQuery);
+          }).toList();
+
+          return Column(
+            children: [
+              // Search Bar Header
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                color: const Color(0xFF0D1117),
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Search areas...',
+                    hintStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.grey),
+                            onPressed: () => _searchController.clear(),
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: const Color(0xFF161B22),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF30363D)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: theme.colorScheme.tertiary),
+                    ),
                   ),
                 ),
-              );
-            },
+              ),
+              const Divider(height: 1, color: Color(0xFF30363D)),
+              Expanded(
+                child: filteredAreas.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No matching areas found.',
+                          style: TextStyle(color: Colors.grey, fontSize: 16),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16.0),
+                        itemCount: filteredAreas.length,
+                        itemBuilder: (context, index) {
+                          final area = filteredAreas[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: const BorderSide(color: Color(0xFF30363D), width: 1),
+                            ),
+                            color: const Color(0xFF161B22),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                              child: Row(
+                                children: [
+                                  // Lead visual badge
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(Icons.location_on_outlined, color: theme.colorScheme.tertiary),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  // Core details
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          area.name,
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'This area has ${area.clientCount} connection${area.clientCount == 1 ? '' : 's'}',
+                                          style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // Edit Icon Button
+                                  IconButton(
+                                    tooltip: 'Edit',
+                                    icon: Icon(Icons.edit_outlined, color: Colors.grey[400]),
+                                    onPressed: () => _showAreaDialog(context, area: area),
+                                  ),
+                                  // Delete Icon Button
+                                  IconButton(
+                                    tooltip: 'Delete',
+                                    icon: const Icon(Icons.delete_outline, color: Color(0xFFF85149)),
+                                    onPressed: () => _showDeleteConfirmation(context, area),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           );
         },
       ),

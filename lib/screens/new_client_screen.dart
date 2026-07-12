@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/area.dart';
-import '../models/package.dart';
 import '../services/firebase_service.dart';
 import '../widgets/responsive_scaffold.dart';
 
@@ -17,12 +16,24 @@ class _NewClientScreenState extends State<NewClientScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _totalBillController = TextEditingController();
-  final _initialPaymentController = TextEditingController(text: '0');
+  final _initialPaymentController = TextEditingController();
+  final _customPackageNameController = TextEditingController();
 
   String? _selectedArea;
-  PackageModel? _selectedPackage;
+  String? _selectedPackageName;
   DateTime _connectionDate = DateTime.now();
   bool _isSaving = false;
+
+  final List<Map<String, String>> _packageOptions = [
+    {'value': '2mb', 'label': '2 Mbps'},
+    {'value': '4mb', 'label': '4 Mbps'},
+    {'value': '6mb', 'label': '6 Mbps'},
+    {'value': '8mb', 'label': '8 Mbps'},
+    {'value': '10mb', 'label': '10 Mbps'},
+    {'value': 'custom', 'label': 'Custom (Add Manually)'},
+  ];
+
+  bool get _isCustomPackage => _selectedPackageName == 'custom';
 
   @override
   void initState() {
@@ -38,6 +49,7 @@ class _NewClientScreenState extends State<NewClientScreen> {
     _phoneController.dispose();
     _totalBillController.dispose();
     _initialPaymentController.dispose();
+    _customPackageNameController.dispose();
     super.dispose();
   }
 
@@ -80,13 +92,7 @@ class _NewClientScreenState extends State<NewClientScreen> {
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedArea == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an area')),
-      );
-      return;
-    }
-    if (_selectedPackage == null) {
+    if (_selectedPackageName == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a broadband package')),
       );
@@ -101,12 +107,22 @@ class _NewClientScreenState extends State<NewClientScreen> {
       final bill = double.tryParse(_totalBillController.text) ?? 0.0;
       final paid = double.tryParse(_initialPaymentController.text) ?? 0.0;
 
+      String pId;
+      String pName;
+      if (_isCustomPackage) {
+        pId = 'custom';
+        pName = _customPackageNameController.text.trim();
+      } else {
+        pId = _selectedPackageName!;
+        pName = _packageOptions.firstWhere((opt) => opt['value'] == _selectedPackageName)['label']!;
+      }
+
       await FirebaseService().addClient(
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
-        area: _selectedArea!,
-        packageId: _selectedPackage!.id,
-        packageName: _selectedPackage!.name,
+        area: _selectedArea ?? '',
+        packageId: pId,
+        packageName: pName,
         totalBill: bill,
         initialPayment: paid,
         connectionDate: _connectionDate,
@@ -150,20 +166,11 @@ class _NewClientScreenState extends State<NewClientScreen> {
         padding: const EdgeInsets.all(24.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Register Broadband Subscriber',
-                style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.tertiary,
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-              const SizedBox(height: 24),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 750;
 
-              // Full Name field
-              TextFormField(
+              final nameWidget = TextFormField(
                 controller: _nameController,
                 enabled: !_isSaving,
                 textCapitalization: TextCapitalization.words,
@@ -178,11 +185,9 @@ class _NewClientScreenState extends State<NewClientScreen> {
                   }
                   return null;
                 },
-              ),
-              const SizedBox(height: 20),
+              );
 
-              // Phone Number field
-              TextFormField(
+              final phoneWidget = TextFormField(
                 controller: _phoneController,
                 enabled: !_isSaving,
                 keyboardType: TextInputType.phone,
@@ -201,70 +206,76 @@ class _NewClientScreenState extends State<NewClientScreen> {
                   }
                   return null;
                 },
-              ),
-              const SizedBox(height: 20),
+              );
 
-              // Area Dropdown field
-              StreamBuilder<List<AreaModel>>(
+              final areaWidget = StreamBuilder<List<AreaModel>>(
                 stream: FirebaseService().getAreas(),
                 builder: (context, snapshot) {
                   final areas = snapshot.data ?? [];
                   return DropdownButtonFormField<String>(
-                    initialValue: _selectedArea,
+                    value: _selectedArea,
                     decoration: const InputDecoration(
-                      labelText: 'Select Area *',
+                      labelText: 'Select Area',
                       prefixIcon: Icon(Icons.map_outlined),
                     ),
-                    items: areas.map((area) {
-                      return DropdownMenuItem<String>(
-                        value: area.name,
-                        child: Text(area.name),
-                      );
-                    }).toList(),
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: '',
+                        child: Text('-- None / Blank --'),
+                      ),
+                      ...areas.map((area) {
+                        return DropdownMenuItem<String>(
+                          value: area.name,
+                          child: Text(area.name),
+                        );
+                      }),
+                    ],
                     onChanged: (val) {
                       setState(() {
                         _selectedArea = val;
                       });
                     },
-                    validator: (val) => val == null ? 'Please select an area' : null,
                   );
                 },
-              ),
-              const SizedBox(height: 20),
+              );
 
-              // Package Dropdown field
-              StreamBuilder<List<PackageModel>>(
-                stream: FirebaseService().getPackages(),
-                builder: (context, snapshot) {
-                  final packages = snapshot.data ?? [];
-                  return DropdownButtonFormField<PackageModel>(
-                    initialValue: _selectedPackage,
-                    decoration: const InputDecoration(
-                      labelText: 'Select Package *',
-                      prefixIcon: Icon(Icons.speed_outlined),
-                    ),
-                    items: packages.map((pkg) {
-                      return DropdownMenuItem<PackageModel>(
-                        value: pkg,
-                        child: Text('${pkg.name} - Rs. ${pkg.price.toStringAsFixed(0)}'),
-                      );
-                    }).toList(),
-                    onChanged: (pkg) {
-                      setState(() {
-                        _selectedPackage = pkg;
-                        if (pkg != null) {
-                          _totalBillController.text = pkg.price.toStringAsFixed(0);
-                        }
-                      });
-                    },
-                    validator: (val) => val == null ? 'Please select a package' : null,
+              final packageWidget = DropdownButtonFormField<String>(
+                value: _selectedPackageName,
+                decoration: const InputDecoration(
+                  labelText: 'Select Package *',
+                  prefixIcon: Icon(Icons.speed_outlined),
+                ),
+                items: _packageOptions.map((opt) {
+                  return DropdownMenuItem<String>(
+                    value: opt['value']!,
+                    child: Text(opt['label']!),
                   );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedPackageName = val;
+                  });
                 },
-              ),
-              const SizedBox(height: 20),
+                validator: (val) => val == null ? 'Please select a package' : null,
+              );
 
-              // Total Bill field
-              TextFormField(
+              final customPackageNameWidget = TextFormField(
+                controller: _customPackageNameController,
+                enabled: !_isSaving,
+                decoration: const InputDecoration(
+                  labelText: 'Custom Package Name *',
+                  prefixIcon: Icon(Icons.speed_outlined),
+                  hintText: 'e.g. 15 Mbps',
+                ),
+                validator: (value) {
+                  if (_isCustomPackage && (value == null || value.trim().isEmpty)) {
+                    return 'Please enter the custom package name';
+                  }
+                  return null;
+                },
+              );
+
+              final totalBillWidget = TextFormField(
                 controller: _totalBillController,
                 enabled: !_isSaving,
                 keyboardType: TextInputType.number,
@@ -281,11 +292,9 @@ class _NewClientScreenState extends State<NewClientScreen> {
                   }
                   return null;
                 },
-              ),
-              const SizedBox(height: 20),
+              );
 
-              // Initial Payment field
-              TextFormField(
+              final initialPaymentWidget = TextFormField(
                 controller: _initialPaymentController,
                 enabled: !_isSaving,
                 keyboardType: TextInputType.number,
@@ -300,11 +309,9 @@ class _NewClientScreenState extends State<NewClientScreen> {
                   }
                   return null;
                 },
-              ),
-              const SizedBox(height: 20),
+              );
 
-              // Connection Date picker field
-              TextFormField(
+              final dateWidget = TextFormField(
                 readOnly: true,
                 controller: TextEditingController(
                   text: "${_connectionDate.toLocal()}".split(' ')[0],
@@ -319,11 +326,9 @@ class _NewClientScreenState extends State<NewClientScreen> {
                   ),
                 ),
                 onTap: () => _selectDate(context),
-              ),
-              const SizedBox(height: 20),
+              );
 
-              // Remaining Dues (Read Only auto calculated)
-              TextFormField(
+              final remainingWidget = TextFormField(
                 readOnly: true,
                 controller: TextEditingController(
                   text: _remainingAmount.toStringAsFixed(0),
@@ -335,24 +340,103 @@ class _NewClientScreenState extends State<NewClientScreen> {
                   fillColor: Color(0xFF161B22),
                   filled: true,
                 ),
-              ),
-              const SizedBox(height: 36),
+              );
 
-              // Save Submit Button
-              ElevatedButton(
-                onPressed: _isSaving ? null : _handleSubmit,
-                child: _isSaving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Register Broadband Subscriber',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.tertiary,
+                          fontWeight: FontWeight.w500,
                         ),
-                      )
-                    : const Text('Add Client'),
-              ),
-            ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  if (isWide) ...[
+                    // First line: name, phone number, and area
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: nameWidget),
+                        const SizedBox(width: 16),
+                        Expanded(child: phoneWidget),
+                        const SizedBox(width: 16),
+                        Expanded(child: areaWidget),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Second line: package, total bill, paid or pending
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: packageWidget),
+                        const SizedBox(width: 16),
+                        Expanded(child: totalBillWidget),
+                        const SizedBox(width: 16),
+                        Expanded(child: initialPaymentWidget),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    if (_isCustomPackage) ...[
+                      customPackageNameWidget,
+                      const SizedBox(height: 20),
+                    ],
+
+                    // Third line: connection date, remaining dues
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: dateWidget),
+                        const SizedBox(width: 16),
+                        Expanded(child: remainingWidget),
+                      ],
+                    ),
+                  ] else ...[
+                    // Mobile single-column stacked layout
+                    nameWidget,
+                    const SizedBox(height: 20),
+                    phoneWidget,
+                    const SizedBox(height: 20),
+                    areaWidget,
+                    const SizedBox(height: 20),
+                    packageWidget,
+                    const SizedBox(height: 20),
+                    if (_isCustomPackage) ...[
+                      customPackageNameWidget,
+                      const SizedBox(height: 20),
+                    ],
+                    totalBillWidget,
+                    const SizedBox(height: 20),
+                    initialPaymentWidget,
+                    const SizedBox(height: 20),
+                    dateWidget,
+                    const SizedBox(height: 20),
+                    remainingWidget,
+                  ],
+
+                  const SizedBox(height: 36),
+
+                  // Save Submit Button
+                  ElevatedButton(
+                    onPressed: _isSaving ? null : _handleSubmit,
+                    child: _isSaving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Add Client'),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),

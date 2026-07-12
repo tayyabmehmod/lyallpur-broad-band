@@ -160,32 +160,16 @@ class _ClientsScreenState extends State<ClientsScreen> {
                           : 'Expired • Expires in ${-daysAgo} days';
                     }
 
-                    return Card(
+                     final dateStr = "${client.connectionDate.toLocal()}".split(' ')[0];
+
+                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: const BorderSide(color: Color(0xFF30363D)),
                       ),
                       color: const Color(0xFF161B22),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: isActive 
-                              ? Colors.green.withValues(alpha: 0.1) 
-                              : Colors.red.withValues(alpha: 0.1),
-                          child: Icon(
-                            isActive ? Icons.wifi : Icons.wifi_off,
-                            color: isActive ? Colors.greenAccent : Colors.redAccent,
-                          ),
-                        ),
-                        title: Text(
-                          client.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
-                        subtitle: Text(
-                          'Plan: ${client.packageName} | $statusText',
-                          style: TextStyle(color: Colors.grey[400], fontSize: 13),
-                        ),
-                        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                      child: InkWell(
                         onTap: () {
                           Navigator.pushNamed(
                             context,
@@ -193,6 +177,126 @@ class _ClientsScreenState extends State<ClientsScreen> {
                             arguments: client.id,
                           );
                         },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              // Visual status indicator line on the left
+                              Container(
+                                width: 4,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: isActive ? Colors.greenAccent : Colors.redAccent,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+
+                              // Core information column (Left side)
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // First Line: Name, Phone, Area
+                                    Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      spacing: 8,
+                                      runSpacing: 4,
+                                      children: [
+                                        Text(
+                                          client.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          '(${client.phone})',
+                                          style: TextStyle(
+                                            color: Colors.grey[400],
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF30363D),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            client.area,
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.white70,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+
+                                    // Second Line: Package (no dropdown), Total Bill, Paid, Pending
+                                    Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      spacing: 12,
+                                      runSpacing: 4,
+                                      children: [
+                                        Text(
+                                          client.packageName,
+                                          style: TextStyle(
+                                            color: theme.colorScheme.tertiary,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Bill: Rs. ${client.totalBill.toStringAsFixed(0)}',
+                                          style: const TextStyle(color: Colors.grey, fontSize: 13),
+                                        ),
+                                        Text(
+                                          'Paid: Rs. ${client.totalPaid.toStringAsFixed(0)}',
+                                          style: const TextStyle(color: Colors.greenAccent, fontSize: 13),
+                                        ),
+                                        Text(
+                                          'Pending: Rs. ${client.remaining.toStringAsFixed(0)}',
+                                          style: TextStyle(
+                                            color: client.remaining > 0 ? Colors.redAccent : Colors.grey,
+                                            fontSize: 13,
+                                            fontWeight: client.remaining > 0 ? FontWeight.bold : FontWeight.normal,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Right Column: Date & Navigation Arrow
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    dateStr,
+                                    style: TextStyle(
+                                      color: Colors.grey[400],
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    color: Colors.grey,
+                                    size: 18,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },
