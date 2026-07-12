@@ -469,18 +469,20 @@ class FirebaseService {
       });
     }
 
-    // 3. Increment area client count
-    final areaQuery = await FirebaseFirestore.instance
-        .collection('areas')
-        .where('name', isEqualTo: area)
-        .limit(1)
-        .get();
+    // 3. Increment area client count if area is not blank
+    if (area.trim().isNotEmpty) {
+      final areaQuery = await FirebaseFirestore.instance
+          .collection('areas')
+          .where('name', isEqualTo: area.trim())
+          .limit(1)
+          .get();
 
-    if (areaQuery.docs.isNotEmpty) {
-      final areaDoc = areaQuery.docs.first;
-      batch.update(areaDoc.reference, {
-        'clientCount': FieldValue.increment(1),
-      });
+      if (areaQuery.docs.isNotEmpty) {
+        final areaDoc = areaQuery.docs.first;
+        batch.update(areaDoc.reference, {
+          'clientCount': FieldValue.increment(1),
+        });
+      }
     }
 
     await batch.commit();
