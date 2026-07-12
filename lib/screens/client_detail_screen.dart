@@ -13,6 +13,49 @@ class ClientDetailScreen extends StatelessWidget {
     return 'Rs. $formatStr';
   }
 
+  Widget _buildInfoTile({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showCollectPaymentDialog(BuildContext context, ClientModel client) {
     final amountController = TextEditingController(text: client.remaining > 0 ? client.remaining.toStringAsFixed(0) : '');
     final noteController = TextEditingController(text: 'Dues Payment');
@@ -248,6 +291,8 @@ class ClientDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final clientId = ModalRoute.of(context)?.settings.arguments as String? ?? '';
     final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
+    final isWideScreen = size.width >= 800;
 
     return Scaffold(
       appBar: AppBar(
@@ -351,46 +396,102 @@ class ClientDetailScreen extends StatelessWidget {
                           side: const BorderSide(color: Color(0xFF30363D)),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            children: [
-                              ListTile(
-                                leading: const Icon(Icons.phone_outlined, color: Colors.blueAccent),
-                                title: const Text('Phone Number', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                                subtitle: Text(client.phone, style: const TextStyle(color: Colors.white, fontSize: 16)),
-                              ),
-                              const Divider(color: Color(0xFF30363D)),
-                              ListTile(
-                                leading: const Icon(Icons.map_outlined, color: Colors.purpleAccent),
-                                title: const Text('Service Area', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                                subtitle: Text(client.area, style: const TextStyle(color: Colors.white, fontSize: 16)),
-                              ),
-                              const Divider(color: Color(0xFF30363D)),
-                              ListTile(
-                                leading: const Icon(Icons.speed, color: Colors.orangeAccent),
-                                title: const Text('Subscription Package', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                                subtitle: Text(client.packageName, style: const TextStyle(color: Colors.white, fontSize: 16)),
-                              ),
-                              const Divider(color: Color(0xFF30363D)),
-                              ListTile(
-                                leading: const Icon(Icons.calendar_today_outlined, color: Colors.tealAccent),
-                                title: const Text('Billing Connection Date', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                                subtitle: Text(
-                                  "${client.connectionDate.toLocal()}".split(' ')[0],
-                                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: isWideScreen
+                              ? Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildInfoTile(
+                                            icon: Icons.phone_outlined,
+                                            iconColor: Colors.blueAccent,
+                                            title: 'Phone Number',
+                                            subtitle: client.phone,
+                                          ),
+                                        ),
+                                        Container(width: 1, height: 40, color: const Color(0xFF30363D)),
+                                        Expanded(
+                                          child: _buildInfoTile(
+                                            icon: Icons.map_outlined,
+                                            iconColor: Colors.purpleAccent,
+                                            title: 'Service Area',
+                                            subtitle: client.area.isEmpty ? 'None / Blank' : client.area,
+                                          ),
+                                        ),
+                                        Container(width: 1, height: 40, color: const Color(0xFF30363D)),
+                                        Expanded(
+                                          child: _buildInfoTile(
+                                            icon: Icons.speed,
+                                            iconColor: Colors.orangeAccent,
+                                            title: 'Subscription Package',
+                                            subtitle: client.packageName,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(height: 1, color: Color(0xFF30363D)),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildInfoTile(
+                                            icon: Icons.calendar_today_outlined,
+                                            iconColor: Colors.tealAccent,
+                                            title: 'Billing Connection Date',
+                                            subtitle: "${client.connectionDate.toLocal()}".split(' ')[0],
+                                          ),
+                                        ),
+                                        Container(width: 1, height: 40, color: const Color(0xFF30363D)),
+                                        Expanded(
+                                          child: _buildInfoTile(
+                                            icon: Icons.timer_outlined,
+                                            iconColor: Colors.pinkAccent,
+                                            title: 'Next Billing Due Date',
+                                            subtitle: "${expiryDate.toLocal()}".split(' ')[0],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  children: [
+                                    _buildInfoTile(
+                                      icon: Icons.phone_outlined,
+                                      iconColor: Colors.blueAccent,
+                                      title: 'Phone Number',
+                                      subtitle: client.phone,
+                                    ),
+                                    const Divider(height: 1, color: Color(0xFF30363D)),
+                                    _buildInfoTile(
+                                      icon: Icons.map_outlined,
+                                      iconColor: Colors.purpleAccent,
+                                      title: 'Service Area',
+                                      subtitle: client.area.isEmpty ? 'None / Blank' : client.area,
+                                    ),
+                                    const Divider(height: 1, color: Color(0xFF30363D)),
+                                    _buildInfoTile(
+                                      icon: Icons.speed,
+                                      iconColor: Colors.orangeAccent,
+                                      title: 'Subscription Package',
+                                      subtitle: client.packageName,
+                                    ),
+                                    const Divider(height: 1, color: Color(0xFF30363D)),
+                                    _buildInfoTile(
+                                      icon: Icons.calendar_today_outlined,
+                                      iconColor: Colors.tealAccent,
+                                      title: 'Billing Connection Date',
+                                      subtitle: "${client.connectionDate.toLocal()}".split(' ')[0],
+                                    ),
+                                    const Divider(height: 1, color: Color(0xFF30363D)),
+                                    _buildInfoTile(
+                                      icon: Icons.timer_outlined,
+                                      iconColor: Colors.pinkAccent,
+                                      title: 'Next Billing Due Date',
+                                      subtitle: "${expiryDate.toLocal()}".split(' ')[0],
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const Divider(color: Color(0xFF30363D)),
-                              ListTile(
-                                leading: const Icon(Icons.timer_outlined, color: Colors.pinkAccent),
-                                title: const Text('Next Billing Due Date', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                                subtitle: Text(
-                                  "${expiryDate.toLocal()}".split(' ')[0],
-                                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -449,59 +550,110 @@ class ClientDetailScreen extends StatelessWidget {
                       const SizedBox(height: 32),
 
                       // Action buttons
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.secondary,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () => _showCollectPaymentDialog(context, client),
-                            icon: const Icon(Icons.payment, color: Colors.white),
-                            label: const Text('Collect Payment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton.icon(
+                      isWideScreen
+                          ? Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: theme.colorScheme.secondary,
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    onPressed: () => _showCollectPaymentDialog(context, client),
+                                    icon: const Icon(Icons.payment, color: Colors.white),
+                                    label: const Text('Collect Payment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    onPressed: () => _showRenewDialog(context, client),
+                                    icon: const Icon(Icons.replay_circle_filled_outlined, color: Colors.white),
+                                    label: const Text('Renew Client', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  ),
+                                ),
+                                if (isActive) ...[
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        side: const BorderSide(color: Colors.red),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      onPressed: () => _suspendClient(context, client),
+                                      icon: const Icon(Icons.do_disturb_on_outlined, color: Colors.red),
+                                      label: const Text('Suspend', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
+                                    backgroundColor: theme.colorScheme.secondary,
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  onPressed: () => _showRenewDialog(context, client),
-                                  icon: const Icon(Icons.replay_circle_filled_outlined, color: Colors.white),
-                                  label: const Text('Renew Client', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  onPressed: () => _showCollectPaymentDialog(context, client),
+                                  icon: const Icon(Icons.payment, color: Colors.white),
+                                  label: const Text('Collect Payment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                 ),
-                              ),
-                              if (isActive) ...[
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
-                                      side: const BorderSide(color: Colors.red),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.green,
+                                          padding: const EdgeInsets.symmetric(vertical: 16),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                        onPressed: () => _showRenewDialog(context, client),
+                                        icon: const Icon(Icons.replay_circle_filled_outlined, color: Colors.white),
+                                        label: const Text('Renew Client', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                       ),
                                     ),
-                                    onPressed: () => _suspendClient(context, client),
-                                    icon: const Icon(Icons.do_disturb_on_outlined, color: Colors.red),
-                                    label: const Text('Suspend', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                                  ),
+                                    if (isActive) ...[
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(vertical: 16),
+                                            side: const BorderSide(color: Colors.red),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          onPressed: () => _suspendClient(context, client),
+                                          icon: const Icon(Icons.do_disturb_on_outlined, color: Colors.red),
+                                          label: const Text('Suspend', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ],
-                            ],
-                          ),
-                        ],
-                      ),
+                            ),
                     ],
                   ),
                 );
